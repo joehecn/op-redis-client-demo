@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Open Server REST API
+  description: Open Server RESTFULL API
+  version: 1.0.0
+servers:
+- url: http://10.12.1.11:4322/
+  description: for dev online.
+- url: http://localhost:4323/
+  description: for development.
+paths:
+  /api/v1/operate:
+    post:
+      operationId: operate
+      tags:
+        - OperateService
+      summary: operate.
+      description: operate.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                doorID:
+                  type: string
+                cardID:
+                  type: string
+                method:
+                  enum:
+                    - Add
+                    - Remove
+                  type: string
+                type:
+                  enum: ["octopus", "user"]
+                  type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/get_operates:
+    get:
+      operationId: getOperates
+      tags:
+        - SyncService
+      summary: get operates.
+      description: get operates.
+      security:
+        - basicAuth: []
+      parameters:
+        - description: Door ID.
+          name: door_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - description: Start operate key.
+          name: start_operate_key
+          in: query
+          required: true
+          schema:
+            format: int64
+            type: string
+        - description: End operate key.
+          name: end_operate_key
+          in: query
+          schema:
+            format: int64
+            type: string
+        - description: Type.
+          name: type
+          in: query
+          schema:
+            enum: ["octopus", "user"]
+            type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/latest_snapshot_operatekey:
+    get:
+      operationId: latestSnapshotOperatekey
+      tags:
+        - SyncService
+      summary: get latest snapshot operatekey.
+      description: get latest snapshot operatekey.
+      security:
+        - basicAuth: []
+      parameters:
+        - description: Door ID.
+          name: door_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - description: Type.
+          name: type
+          in: query
+          schema:
+            enum: ["octopus", "user"]
+            type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/snapshot_cards:
+    get:
+      operationId: snapshotCards
+      tags:
+        - SyncService
+      summary: get snapshot cards.
+      description: get snapshot cards.
+      security:
+        - basicAuth: []
+      parameters:
+        - description: Door ID.
+          name: door_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - description: Operate key.
+          name: operate_key
+          in: query
+          required: true
+          schema:
+            format: int64
+            type: string
+        - description: Type.
+          name: type
+          in: query
+          schema:
+            enum: ["octopus", "user"]
+            type: string
+        - description: Page.
+          name: page
+          in: query
+          schema:
+            format: int64
+            type: string
+        - description: Size.
+          name: size
+          in: query
+          schema:
+            format: int64
+            type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/replace_card:
+    put:
+      operationId: replaceCard
+      tags:
+        - CardService
+      summary: Replace an user's octopus card.
+      description: Replace an user's octopus card.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                replacedCardID:
+                  description: old card
+                  type: string
+                cardID:
+                  description: new card
+                  type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/report:
+    post:
+      operationId: report
+      tags:
+        - CardService
+      summary: Report data.
+      description: Report data.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                time:
+                  description: report time
+                  type: string
+                customID:
+                  description: device ID
+                  type: string
+                id:
+                  description: |
+                    - array: [x, x]
+                    - string: x
+                  oneOf:
+                    - type: array
+                      items:
+                        type: string
+                    - type: string
+                result:
+                  type: boolean
+                type:
+                  description: |
+                    | type  | 含义  |
+                    | ------------ | ------------ |
+                    | 1  | 门禁八达通  |
+                    | 2  | 门禁User二维码, 本地验证  |
+                    | 3  | 门禁qrcodeid二维码, 联网验证  |
+                    | 4  | 门禁蓝牙  |
+                  enum: [1, 2, 3, 4]
+                  type: number
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+  /api/v1/qrcode_can_open_door:
+    post:
+      operationId: qrcodeCanOpenDoor
+      tags:
+        - QrcodeService
+      summary: Qrcode can open door.
+      description: Qrcode can open door.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qrcodeID:
+                  type: string
+                megaDeviceCustomID:
+                  type: string
+      responses:
+        200:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                properties: {}
+components:
+  securitySchemes:
+    basicAuth:     # <-- arbitrary name for the security scheme
+      type: http
+      scheme: basic

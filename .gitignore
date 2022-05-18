@@ -1,0 +1,5 @@
+docs
+logs
+node_modules
+public/api
+public/index.html
