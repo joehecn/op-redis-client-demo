@@ -15,7 +15,7 @@ import mqttEmitter from './mqttEmitter.js'
 
 const htoc = async (topic, payloadBuf) => {
   const payloadStr = payloadBuf.toString()
-  console.log(topic, payloadStr)
+  // console.log(topic, payloadStr)
   // <customid>/<type>/cmd
   // T00000000003/opendoor/cmd
   // {

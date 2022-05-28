@@ -1,6 +1,5 @@
 import {
   KafkaClient,
-  // Offset,
   Consumer
 } from 'kafka-node'
 
@@ -14,6 +13,9 @@ import {
 
 import { writeKafkaErr } from '../util/write.js'
 import { sleep } from '../util/sleep.js'
+
+// kafka client
+let client = null
 
 // redis
 let _r = null
@@ -86,41 +88,14 @@ const handleMessage = async message => {
   await _startLoop()
 }
 
-const run = async () => {
-  const client = new KafkaClient({ kafkaHost })
-
-  // const toffset = new Offset(client)
-  // toffset.fetch([
-  //   // { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_0, time: -1, maxNum: 1 },
-  //   { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_0, time: -2, maxNum: 1 }
-  // ], function (err, data) {
-  //   console.log(data)
-  // })
-
-  client.on('error', e => {
-    console.log('[-Kafka Client-] run ERROR:')
-    console.error(e)
-    writeKafkaErr({
-      ctx: {
-        code: e.code || 21000001,
-        message: e.message || '[-Kafka Client-] run ERROR:',
-      },
-      stack: e.stack
-    })
-  })
-
-  client.on('connect', () => {
-    console.log('[-Kafka Client-] connected.')
-  })
-
-  client.on('ready', () => {
-    console.log('[-Kafka Client-] is ready.')
-  })
-
+// on (eventName: 'message', cb: (message: Message) => any): this;
+// on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
+const initConsumer = async client => {
+  // console.log(client)
   const offset0 = await _r.getOffset(KAFKA_OPERATE_TOPIC, KAFKA_OPERATE_PARTITION_0, 'octopus')
-  console.log({ offset0 })
+  // console.log({ offset0 })
   const offset1 = await _r.getOffset(KAFKA_OPERATE_TOPIC, KAFKA_OPERATE_PARTITION_1, 'user')
-  console.log({ offset1 })
+  // console.log({ offset1 })
 
   const consumer = new Consumer(
     client,
@@ -136,30 +111,120 @@ const run = async () => {
   
   consumer.on('message', handleMessage)
 
-  // TODO: 重启 kafka client?
-  consumer.on('error', e => {
-    console.log('[-Kafka Consumer-] ERROR:')
-    console.error(e)
-    writeKafkaErr({
-      ctx: {
-        code: e.code || 21000004,
-        message: e.message || '[-Kafka Consumer-] ERROR:',
-      },
-      stack: e.stack
-    })
+  // 重启 kafka client
+  consumer.on('error', async e => {
+    consumer.close()
+
+    console.error('[-Kafka Consumer-] error')
+    console.error(e.code, e.message)
+    // writeKafkaErr({
+    //   ctx: {
+    //     code: e.code || 21000004,
+    //     message: e.message || '[-Kafka Consumer-] ERROR:',
+    //   },
+    //   stack: e.stack
+    // })
+
+    await sleep(30 * 1000)
+    console.log('---- retry run')
+    await run()
+
+    // if (e.code === 'ECONNREFUSED') {
+    // } else {
+    //   await sleep(30000)
+    //   console.log('---- retry initConsumer')
+    //   await initConsumer(client)
+    // }
   })
 
+  // consumer.on('socket_error', async e => {
+  //   console.error('[-Kafka Consumer-] socket_error')
+  // })
+
   consumer.on('offsetOutOfRange', e => {
-    console.log('[-Kafka Consumer-] offsetOutOfRange ERROR:')
-    console.error(e)
-    writeKafkaErr({
-      ctx: {
-        code: e.code || 21000005,
-        message: e.message || '[-Kafka Consumer-] offsetOutOfRange ERROR:',
-      },
-      stack: e.stack
-    })
+    console.error('[-Kafka Consumer-] offsetOutOfRange')
+    // console.error(e)
+    // writeKafkaErr({
+    //   ctx: {
+    //     code: e.code || 21000005,
+    //     message: e.message || '[-Kafka Consumer-] offsetOutOfRange ERROR:',
+    //   },
+    //   stack: e.stack
+    // })
   })
+
+  // consumer.on('connect', async () => {
+  //   console.log('[-Kafka Consumer-] connect')
+  // })
+
+  // consumer.on('reconnect', () => {
+  //   console.log('[-Kafka Consumer-] reconnect')
+  // })
+
+  // consumer.on('ready', () => {
+  //   console.log('[-Kafka Consumer-] ready')
+  // })
+}
+
+const run = async () => {
+  // close client
+  if (client) {
+    client.close()
+    client = null
+    await sleep(30 * 1000)
+  }
+
+  client = new KafkaClient({ kafkaHost })
+
+  // const toffset = new Offset(client)
+  // toffset.fetch([
+  //   // { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_0, time: -1, maxNum: 1 },
+  //   { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_0, time: -2, maxNum: 1 }
+  // ], function (err, data) {
+  //   console.log(data)
+  // })
+
+  // // on (eventName: 'brokersChanged' | 'close' | 'connect' | 'ready' | 'reconnect' | 'zkReconnect', cb: () => any): this;
+  // // on (eventName: 'error' | 'socket_error', cb: (error: any) => any): this;
+  client.on('error', async e => {
+    console.log('[-Kafka Client-] ERROR:')
+    // console.error(e)
+    // writeKafkaErr({
+    //   ctx: {
+    //     code: e.code || 21000001,
+    //     message: e.message || '[-Kafka Client-] run ERROR:',
+    //   },
+    //   stack: e.stack
+    // })
+
+    // if (e.code === 'ECONNREFUSED') {
+    //   await sleep(30000)
+    //   console.log('---- retry connect Kafka server...')
+    //   await run()
+    // }
+  })
+
+  client.on('socket_error', async e => {
+    console.log('[-Kafka Client-] SOCKET_ERROR:')
+    // console.log(client)
+    // console.error(e)
+  })
+
+  client.on('connect', async () => {
+    console.log('[-Kafka Client-] connected.')
+    // console.log(client.topicMetadata)
+    // init consumer
+    // consumer = await initConsumer(client)
+  })
+  client.on('reconnect', () => {
+    console.log('[-Kafka Client-] reconnect.')
+  })
+
+  client.on('ready', () => {
+    console.log('[-Kafka Client-] is ready.')
+  })
+
+  await initConsumer(client)
 }
 
 const init = async r => {
@@ -167,14 +232,13 @@ const init = async r => {
     _r = r
 
     await run()
-    console.log('[-Kafka Consumer-] is running.')
   } catch (e) {
-    console.log('[-Kafka Consumer-] init ERROR:')
+    console.log('[-Kafka-] init ERROR:')
     console.error(e)
     writeKafkaErr({
       ctx: {
         code: e.code || 21000003,
-        message: e.message || '[-Kafka Consumer-] init ERROR:',
+        message: e.message || '[-Kafka-] init ERROR:',
       },
       stack: e.stack
     })

@@ -64,7 +64,7 @@ const _coverMessage = async ctx => {
 
   ctx.state.payloadStr = payloadStr
 
-  console.log({ topic: ctx.state.topic, payloadStr })
+  // console.log({ topic: ctx.state.topic, payloadStr })
 
   switch (topicArr.length) {
     // "%s/info"

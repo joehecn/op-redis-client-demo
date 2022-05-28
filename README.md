@@ -69,3 +69,5 @@ super Mega@2022
 https://masik-sandbox.cloud-building.com/
 mega@mega.com 123123
 ```
+
+docker run -d -p 1883:1883 -p 9001:9001 --name mqtt -v /root/mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf -v /root/mqtt/home:/home eclipse-mosquitto
