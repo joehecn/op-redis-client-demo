@@ -1,3 +1,9 @@
+docker pull joehe/op-redis-client-demo:1.0.1
+
+docker run -d -p 4322:4322 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network chirpstack-docker_default --name op-redis-client-demo1 joehe/op-redis-client-demo:1.0.1
+
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo1 joehe/op-redis-client-demo:1.0.1
+
 TODO:
 
 - [] http 安全访问, 加 Token
@@ -19,7 +25,7 @@ T00000000002
 
 ```bash
 # 本地
-docker build -t joehe/op-redis-client-demo:1.0.0 .
+docker build -t joehe/op-redis-client-demo:1.0.1 .
 
 docker run -d -p 4322:4322 -v /"$PWD"/src:/server/src -v /"$PWD"/logs:/server/logs -v /"$PWD"/public:/server/public --log-opt max-size=500m --log-opt max-file=1  --network chirpstack-docker_default --name op-redis-client-demo joe/op-redis-client-demo:1.0.0
 
@@ -33,7 +39,7 @@ docker network create op-net
 docker network connect op-net some-redis --alias redis
 docker network connect op-net mqtt --alias mosquitto
 
-docker build -t joe/op-redis-client-demo:1.0.0 .
+docker build -t joehe/op-redis-client-demo:1.0.1 .
 
 docker run -d -p 4322:4323 -v /"$PWD"/src:/server/src -v /"$PWD"/logs:/server/logs -v /"$PWD"/public:/server/public --log-opt max-size=500m --log-opt max-file=1  --network op-net --name op-redis-client-demo joe/op-redis-client-demo:1.0.0
 
@@ -56,6 +62,7 @@ docker run -d -p 1883:1883 -p 9001:9001 --name mqtt -v /home/admin1/mqtt/config/
 
 npx mqtt sub -v -t '#' -h '10.12.1.11' -p '1883'
 npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h '10.12.1.11' -p '1883'
+npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h 'localhost' -p '1883'
 
 10.12.1.11:4322/api
 npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h '10.12.1.11' -p '1883'

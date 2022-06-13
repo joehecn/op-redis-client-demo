@@ -7,22 +7,7 @@ import {
   // 保留多少个快照
   CARD_SNAPSHOT_COUNT,
   // 自增key上限
-  MAX_INCR_NUM,
-  // 每个门禁的自增key, 用于:
-  // operateKey = INCR(cardIncrKey)
-  // msg.operateKey
-  // if (operateKey % CARD_SNAPSHOT_LIMIT = 1) snapshot.key = operateKey
-  CARD_INCR_PRE_KEY,
-  USER_INCR_PRE_KEY,
-  // 实时存储每个门禁的门卡的最新数据 Set
-  CARD_PRE_KEY,
-  USER_PRE_KEY,
-  // 增删每个门禁的门卡时的key
-  OPERATE_PRE_KEY,
-  USER_OPERATE_PRE_KEY,
-  // 每个门禁的门卡的快照数据 Set
-  SNAPSHOT_PRE_KEY,
-  USER_SNAPSHOT_PRE_KEY,
+  MAX_INCR_NUM
 } from './config/index.js'
 
 import { writeRedisErr } from './util/write.js'
@@ -33,31 +18,16 @@ import {
 
 import mqttEmitter from './mqtt/mqttEmitter.js'
 
-const _getDoorOptions = (doorID, type) => {
-  switch (type) {
-    case 'user':
-      return {
-        cardIncrKey: `${USER_INCR_PRE_KEY}:${doorID}`,
-        cardKey: `${USER_PRE_KEY}:${doorID}`,
-        cardOperatePreKey: `${USER_OPERATE_PRE_KEY}:${doorID}`,
-        cardSnapshotPreKey: `${USER_SNAPSHOT_PRE_KEY}:${doorID}`
-      }
-    default:
-      return {
-        cardIncrKey: `${CARD_INCR_PRE_KEY}:${doorID}`,
-        cardKey: `${CARD_PRE_KEY}:${doorID}`,
-        cardOperatePreKey: `${OPERATE_PRE_KEY}:${doorID}`,
-        cardSnapshotPreKey: `${SNAPSHOT_PRE_KEY}:${doorID}`
-      }
+const _getDoorOptions = (type, hid) => {
+  return {
+    cardIncrKey: `${type}:incr:${hid}`,
+    cardStateKey: `${type}:state:${hid}`,
+    cardOperatePreKey: `${type}:operate:${hid}`,
+    cardSnapshotPreKey: `${type}:snapshot:${hid}`
   }
 }
-const _getTopicPartitionKey = (topic, partition, type) => {
-  switch (type) {
-    case 'user':
-      return `user:${topic}:${partition}`
-    default:
-      return `door:${topic}:${partition}`
-  }
+const _getTopicPartitionKey = type => {
+  return `${type}:offset`
 }
 
 class R {
@@ -96,19 +66,19 @@ class R {
     this._c = client
   }
 
-  async getOffset(topic, partition, type) {
-    const topicPartitionKey = _getTopicPartitionKey(topic, partition, type)
-    const offset = await this._c.hGet(topicPartitionKey, 'offset')
-    // console.log({ offset })
+  async getOffset(type) {
+    const topicPartitionKey = _getTopicPartitionKey(type)
+    const offset = await this._c.get(topicPartitionKey)
+    console.log({ offset })
     if (offset === null) return 0
     return Number(offset) + 1
   }
 
-  async getCardIncr(doorID, type) {
+  async getCardIncr(type, hid) {
     const {
       // Number
       cardIncrKey
-    } = _getDoorOptions(doorID, type)
+    } = _getDoorOptions(type, hid)
 
     const cardIncr = await this._c.get(cardIncrKey)
     return cardIncr
@@ -117,17 +87,17 @@ class R {
   /**
    * Redis 事务
    * 
-   * @param {string} doorID 
-   * @param {string} cardID 
+   * @param {string} hid 
+   * @param {string} id 
    * @param {string} method 'Add', 'Del'
    */
-  async operate({ doorID, cardID, method, type, topic, partition, offset }) {
+  async operate({ hid, id, value, method, topic, offset }) {
     const {
       // Number
       cardIncrKey,
-      // Set
+      // Hash
       // String 类型的无序集合。集合成员是唯一的，这就意味着集合中不能出现重复的数据
-      cardKey,
+      cardStateKey,
       // cardOperateKey
       // Hash
       // string 类型的 field（字段） 和 value（值） 的映射表
@@ -135,7 +105,7 @@ class R {
       // cardSnapshotKey
       // Set
       cardSnapshotPreKey
-    } = _getDoorOptions(doorID, type)
+    } = _getDoorOptions(topic, hid)
 
     // INCR 最大值确定取值范围[1, MAX_INCR_NUM)
     let operateKey = await this._c.incr(cardIncrKey)
@@ -167,66 +137,69 @@ class R {
     let res = null
     if (method === 'Add') {
       if (topic) {
-        const topicPartitionKey = _getTopicPartitionKey(topic, partition, type)
+        const topicPartitionKey = _getTopicPartitionKey(topic)
+        console.log({ topicPartitionKey, offset })
         res = await this._c.multi()
-          .hSet(topicPartitionKey, { offset })
-          // 向 Set 中添加 key
-          .sAdd(cardKey, cardID)
+          .set(topicPartitionKey, offset.toString())
           // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { cardID, method })
-          // 返回存储在的 Set 中的所有成员的 key
-          .sMembers(cardKey)
+          .hSet(cardStateKey, id, value)
+          // 向 Hash 中添加一条键值对
+          .hSet(cardOperateKey, { id, value, method })
+          // 返回存储在的 Hash 中的所有成员
+          .hGetAll(cardStateKey)
           .exec()
       } else {
         res = await this._c.multi()
-          // 向 Set 中添加 key
-          .sAdd(cardKey, cardID)
           // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { cardID, method })
-          // 返回存储在的 Set 中的所有成员的 key
-          .sMembers(cardKey)
+          .hSet(cardStateKey, id, value)
+          // 向 Hash 中添加一条键值对
+          .hSet(cardOperateKey, { id, value, method })
+          // 返回存储在的 Hash 中的所有成员
+          .hGetAll(cardStateKey)
           .exec()
       }
     } else {
       if (topic) {
-        const topicPartitionKey = _getTopicPartitionKey(topic, partition, type)
+        const topicPartitionKey = _getTopicPartitionKey(topic)
         res = await this._c.multi()
-          .hSet(topicPartitionKey, { offset })
-          // 从 Set 中删除 key
-          .sRem(cardKey, cardID)
+          .set(topicPartitionKey, offset.toString())
+          // 从 Hash 中删除 key
+          .hDel(cardStateKey, id)
           // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { cardID, method })
-          // 返回存储在的 Set 中的所有成员的 key
-          .sMembers(cardKey)
+          .hSet(cardOperateKey, { id, method })
+          // 返回存储在的 Hash 中的所有成员
+          .hGetAll(cardStateKey)
           .exec()
       } else {
         res = await this._c.multi()
-          // 从 Set 中删除 key
-          .sRem(cardKey, cardID)
+          // 从 Hash 中删除 key
+          .hDel(cardStateKey, id)
           // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { cardID, method })
-          // 返回存储在的 Set 中的所有成员的 key
-          .sMembers(cardKey)
+          .hSet(cardOperateKey, { id, method })
+          // 返回存储在的 Hash 中的所有成员
+          .hGetAll(cardStateKey)
           .exec()
       }
     }
 
-    const cards = topic ? res[3] : res[2]
+    const cardObj = (topic ? res[3] : res[2]) || {}
+
+    const cards = Object.keys(cardObj)
 
     const count = cards.length
-    // console.log({ cards })
     const MD5 = crypto.createHash('md5')
+    // const md5 = MD5.update(JSON.stringify(cardObj)).digest('hex')
     const md5 = MD5.update(cards.sort().join()).digest('hex')
 
-    const msg = { operateKey, cardID, method, count, md5 }
+    const msg = { operateKey, id, value, method, count, md5 }
     const msgStr = JSON.stringify(msg)
-    // 发布消息
-    this._c.publish(cardKey, msgStr)
+    // // 发布消息
+    this._c.publish(cardStateKey, msgStr)
 
     // 发布 mqtt 消息
     // 向硬件转发 控制命令 不保留
     mqttEmitter.emit(MQTT_CONTROL_HARDWARE_CMD, {
-      topic: `${doorID}/${type}/cmd`,
+      topic: `${hid}/operate/cmd`,
       payloadStr: msgStr
     })
 
@@ -239,7 +212,7 @@ class R {
       const len = snapshotKeys1.length
 
       if (cards.length > 0) {
-        await this._c.sAdd(cardSnapshotKey, cards)
+        await this._c.hSet(cardSnapshotKey, cardObj)
 
         // 删除最前面一个快照
         // 因为上面那行代码新加了一个快照，len 需要 +1
@@ -283,13 +256,13 @@ class R {
   }
 
   // 通过 key 获取操作
-  async getCardOperateByOperateKey(doorID, operateKey, type) {
+  async getCardOperateByOperateKey(type, hid, operateKey) {
     const {
       // cardOperateKey
       // Hash
       // string 类型的 field（字段） 和 value（值） 的映射表
       cardOperatePreKey
-    } = _getDoorOptions(doorID, type)
+    } = _getDoorOptions(type, hid)
     const cardOperateKey = `${cardOperatePreKey}:${operateKey}`
 
     const operate = await this._c.hGetAll(cardOperateKey)
@@ -297,12 +270,12 @@ class R {
   }
 
   // 获取最后一个快照的 key
-  async getLatestCardSnapshotOperateKey(doorID, type) {
+  async getLatestCardSnapshotOperateKey(type, hid) {
     const {
       // cardSnapshotKey
       // Set
       cardSnapshotPreKey
-    } = _getDoorOptions(doorID, type)
+    } = _getDoorOptions(type, hid)
 
     const snapshotKeys = await this._c.keys(`${cardSnapshotPreKey}:*`)
 
@@ -313,17 +286,17 @@ class R {
   }
 
   // 通过 key 获取快照
-  async getCardSnapshotByOperateKey(doorID, operateKey, type) {
+  async getCardSnapshotByOperateKey(type, hid, operateKey) {
     const {
       // cardSnapshotKey
       // Set
       cardSnapshotPreKey
-    } = _getDoorOptions(doorID, type)
+    } = _getDoorOptions(type, hid)
 
     const cardSnapshotKey = `${cardSnapshotPreKey}:${operateKey}`
 
-    const cards = await this._c.sMembers(cardSnapshotKey)
-    return cards.sort()
+    const cardObj = await this._c.hGetAll(cardSnapshotKey)
+    return cardObj || {}
   }
 }
 

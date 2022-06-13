@@ -63,22 +63,6 @@ export const CARD_SNAPSHOT_COUNT = 3
 // export const MAX_INCR_NUM = Math.pow(2, 32) - 1
 export const MAX_INCR_NUM = Math.pow(2, 31) + 1
 
-// 每个门禁的自增key, 用于:
-// operateKey = INCR(cardIncrKey)
-// msg.operateKey
-// if (operateKey % CARD_SNAPSHOT_LIMIT = 1) snapshot.key = operateKey
-export const CARD_INCR_PRE_KEY = 'door:cardIncr'
-export const USER_INCR_PRE_KEY = 'user:cardIncr'
-// 实时存储每个门禁的门卡的最新数据 Set
-export const CARD_PRE_KEY = 'door:card'
-export const USER_PRE_KEY = 'user:card'
-// 增删每个门禁的门卡时的key
-export const OPERATE_PRE_KEY = 'door:cardOperate'
-export const USER_OPERATE_PRE_KEY = 'user:cardOperate'
-// 每个门禁的门卡的快照数据 Set
-export const SNAPSHOT_PRE_KEY = 'door:cardSnapshot'
-export const USER_SNAPSHOT_PRE_KEY = 'user:cardSnapshot'
-
 // mqttServer
 export const MQTT_HARDWARE = `tcp://${_mosquitto}`
 export const MQTT_CONTROL_HARDWARE_CMD = 'MQTT_CONTROL_HARDWARE_CMD'
@@ -90,9 +74,12 @@ export const MQTT_MOCK_REMOTE_HARDWARE_OPERATE = 'MQTT_MOCK_REMOTE_HARDWARE_OPER
 
 // kafka
 export const KAFKA_HOST = _kafkaHost
-export const KAFKA_OPERATE_TOPIC = 'operate'
-export const KAFKA_OPERATE_PARTITION_0 = 0
-export const KAFKA_OPERATE_PARTITION_1 = 1
+// export const KAFKA_OPERATE_TOPIC = 'operate'
+export const KAFKA_OPERATE_TOPIC_DCARD = 'dcard' // door dcard
+export const KAFKA_OPERATE_TOPIC_DUSER = 'duser' // door duser
+export const KAFKA_OPERATE_TOPIC_MCARD = 'mcard' // mailbox mcard
+export const KAFKA_OPERATE_TOPIC_MUSER = 'muser' // mailbox muser
+export const KAFKA_OPERATE_PARTITION_0 = 0 // 只开放一个 partition
 
 // octopus card
 export const NEW_CARD_LENGTH = 8

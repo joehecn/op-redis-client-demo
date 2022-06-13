@@ -10,6 +10,7 @@ import {
 import mqttEmitter from '../mqtt/mqttEmitter.js'
 
 import {
+  KAFKA_OPERATE_TOPIC_DCARD,
   MQTT_MOCK_REMOTE_HARDWARE_OPERATE
 } from '../config/index.js'
 
@@ -26,16 +27,19 @@ const basicAuth = (ctx, next) => {
 
 // type
 // 做兼容 1
+// T00000000002 dcard
 router.post('/api/v1/operate', basicAuth, async ctx => {
-  const { doorID, cardID, method } = ctx.request.body
+  const { type, hid, id, method } = ctx.request.body
 
-  let { type } = ctx.request.body
-  type = type || 'octopus'
-
-  if (!(doorID && cardID)) throw Error(1001)
+  if (!(hid && id)) throw Error(1001)
   if (!['Add', 'Remove'].includes(method)) throw Error(1002)
 
-  const data = await ctx.state.r.operate({ doorID, cardID, method, type })
+  const data = await ctx.state.r.operate({
+    hid,
+    id,
+    method,
+    topic: type || KAFKA_OPERATE_TOPIC_DCARD
+  })
 
   ctx.body = {
     code: 0,
@@ -45,11 +49,11 @@ router.post('/api/v1/operate', basicAuth, async ctx => {
 
 // type
 // 做兼容 1
+// T00000000002 dcard
 router.get('/api/v1/get_operates', basicAuth, async ctx => {
-  const { door_id, start_operate_key, end_operate_key } = ctx.query
+  const { type, hid, start_operate_key, end_operate_key } = ctx.query
 
-  let { type } = ctx.request.query
-  type = type || 'octopus'
+  const _type = type || KAFKA_OPERATE_TOPIC_DCARD
   
   const operates = []
 
@@ -57,16 +61,18 @@ router.get('/api/v1/get_operates', basicAuth, async ctx => {
 
   let end = Number(end_operate_key)
   if (!end) {
-    end = await ctx.state.r.getCardIncr(door_id, type)
+    end = await ctx.state.r.getCardIncr(_type, hid)
     end = Number(end) + 1
   }
 
   if (start > end) throw Error(1003)
 
   for (let i = start; i < end; i++) {
-    const { cardID, method } = await ctx.state.r.getCardOperateByOperateKey(door_id, i, type)
-    if (!(cardID && method)) throw Error(1003)
-    operates.push({ operateKey: i, cardID, method })
+    const { id, value, method } = await ctx.state.r.getCardOperateByOperateKey(
+      _type, hid, i
+    )
+    if (!(id && method)) throw Error(1003)
+    operates.push({ operateKey: i, id, value, method })
   }
 
   ctx.body = {
@@ -77,13 +83,14 @@ router.get('/api/v1/get_operates', basicAuth, async ctx => {
 
 // type
 // 做兼容 1
+// T00000000002 dcard
 router.get('/api/v1/latest_snapshot_operatekey', basicAuth, async ctx => {
-  const { door_id } = ctx.query
+  const { type, hid } = ctx.query
 
-  let { type } = ctx.request.query
-  type = type || 'octopus'
-
-  const operateKey = await ctx.state.r.getLatestCardSnapshotOperateKey(door_id, type)
+  const operateKey = await ctx.state.r.getLatestCardSnapshotOperateKey(
+    type || KAFKA_OPERATE_TOPIC_DCARD,
+    hid
+  )
 
   ctx.body = {
     code: 0,
@@ -93,14 +100,26 @@ router.get('/api/v1/latest_snapshot_operatekey', basicAuth, async ctx => {
 
 // type
 // 做兼容 1
+// T00000000002 1 dcard
+const _coverToList = cardObj => {
+  console.log(cardObj)
+  const arr = []
+  for (let id in cardObj) {
+    arr.push({ id, value: cardObj[id] })
+  }
+  return arr
+}
 router.get('/api/v1/snapshot_cards', basicAuth, async ctx => {
-  const { door_id, operate_key, page, size } = ctx.query
+  const { type, hid, operate_key: operateKey, page, size } = ctx.query
 
-  let { type } = ctx.request.query
-  type = type || 'octopus'
+  const _key = Number(operateKey)
+  const cardObj = await ctx.state.r.getCardSnapshotByOperateKey(
+    type || KAFKA_OPERATE_TOPIC_DCARD,
+    hid,
+    _key,
+  )
 
-  const operateKey = Number(operate_key)
-  const allCards = await ctx.state.r.getCardSnapshotByOperateKey(door_id, operateKey, type)
+  const allCards = _coverToList(cardObj)
 
   const p = Number(page) || 0
   const s = Number(size) || 10
@@ -113,7 +132,7 @@ router.get('/api/v1/snapshot_cards', basicAuth, async ctx => {
   ctx.body = {
     code: 0,
     data: {
-      operateKey,
+      operateKey: _key,
       page: p,
       size: s,
       count: allCards.length,
@@ -124,11 +143,11 @@ router.get('/api/v1/snapshot_cards', basicAuth, async ctx => {
 
 router.put('/api/v1/replace_card', basicAuth, async ctx => {
   // 旧卡, 新卡
-  const { replacedCardID, cardID } = ctx.request.body
+  const { replacedID, id } = ctx.request.body
 
   const data = await userReplaceCard({
-    replacedCard: replacedCardID,
-    card: cardID
+    replacedCard: replacedID,
+    card: id
   })
 
   ctx.body = {

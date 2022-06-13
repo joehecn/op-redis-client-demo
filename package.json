@@ -1,6 +1,6 @@
 {
   "name": "op-redis-client-demo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ssh admin1@10.12.1.11 Admin123.",
   "main": "src/main.js",
   "type": "module",

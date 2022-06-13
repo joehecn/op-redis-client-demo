@@ -24,8 +24,22 @@ const _handleReport = async ctx => {
 }
 
 // info
-// { "state": "ONLINE", "version": "TEREO_HW_1.0", "firmware": "TEREO_FW_1.1.1", "type": "door" }
+// { "state": "ONLINE", "version": "TEREO_HW_1.0", "firmware": "TEREO_FW_1.1.1", "profileCustomID": "mega-tereo-door-01" }
 // {"state":"OFFLINE"}
+// T00000000003/info {
+//         "state":        "OFFLINE",
+//         "version":      "TEREO_HW_1.0",
+//         "firmware":     "TEREO_FW_1.1.1",
+//         "mac":  "f0:08:d1:d7:a8:ce",
+//         "profileCustomID":      "mega-tereo-door-01"
+// }
+// T00000000004/info {
+//         "state":        "OFFLINE",
+//         "version":      "TEREO_HW_1.0",
+//         "firmware":     "TEREO_FW_1.1.1",
+//         "mac":  "f0:08:d1:dc:5d:2a",
+//         "profileCustomID":      "mega-tereo-mail-01"
+// }
 const _handleInfo = async ctx => {
   const doorID = ctx.state.doorID
   // const { state, version, firmware, type } = ctx.state.payload

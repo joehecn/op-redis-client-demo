@@ -64,7 +64,6 @@ export const userReplaceCard = async sendData => {
 }
 
 // 上报数据
-// 
 export const userReport = async sendData => {
   const data = await _wrap(async () => {
     const signUrl = '/api/v1/user/report'

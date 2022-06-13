@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Open Server REST API
-  description: Open Server RESTFULL API
+  title: Masik Local Server REST API
+  description: Masik Local Server RESTFULL API
   version: 1.0.0
 servers:
 - url: http://10.12.1.11:4322/
@@ -24,9 +24,9 @@ paths:
           application/json:
             schema:
               properties:
-                doorID:
+                hid:
                   type: string
-                cardID:
+                id:
                   type: string
                 method:
                   enum:
@@ -34,7 +34,7 @@ paths:
                     - Remove
                   type: string
                 type:
-                  enum: ["octopus", "user"]
+                  enum: ["dcard", "duser", "mcard", "muser"]
                   type: string
       responses:
         200:
@@ -53,8 +53,8 @@ paths:
       security:
         - basicAuth: []
       parameters:
-        - description: Door ID.
-          name: door_id
+        - description: Hardware ID.
+          name: hid
           in: query
           required: true
           schema:
@@ -76,7 +76,7 @@ paths:
           name: type
           in: query
           schema:
-            enum: ["octopus", "user"]
+            enum: ["dcard", "duser", "mcard", "muser"]
             type: string
       responses:
         200:
@@ -95,8 +95,8 @@ paths:
       security:
         - basicAuth: []
       parameters:
-        - description: Door ID.
-          name: door_id
+        - description: Hardware ID.
+          name: hid
           in: query
           required: true
           schema:
@@ -105,7 +105,7 @@ paths:
           name: type
           in: query
           schema:
-            enum: ["octopus", "user"]
+            enum: ["dcard", "duser", "mcard", "muser"]
             type: string
       responses:
         200:
@@ -124,8 +124,8 @@ paths:
       security:
         - basicAuth: []
       parameters:
-        - description: Door ID.
-          name: door_id
+        - description: Hardware ID.
+          name: hid
           in: query
           required: true
           schema:
@@ -141,7 +141,7 @@ paths:
           name: type
           in: query
           schema:
-            enum: ["octopus", "user"]
+            enum: ["dcard", "duser", "mcard", "muser"]
             type: string
         - description: Page.
           name: page
@@ -232,7 +232,8 @@ paths:
                     | 2  | 门禁User二维码, 本地验证  |
                     | 3  | 门禁qrcodeid二维码, 联网验证  |
                     | 4  | 门禁蓝牙  |
-                  enum: [1, 2, 3, 4]
+                    | 5  | 门禁远程开门  |
+                  enum: [1, 2, 3, 4, 5]
                   type: number
       responses:
         200:

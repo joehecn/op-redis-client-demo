@@ -5,9 +5,13 @@ import {
 
 import {
   KAFKA_HOST as kafkaHost,
-  KAFKA_OPERATE_TOPIC,
+  // KAFKA_OPERATE_TOPIC,
+  KAFKA_OPERATE_TOPIC_DCARD,
+  KAFKA_OPERATE_TOPIC_DUSER,
+  KAFKA_OPERATE_TOPIC_MCARD,
+  KAFKA_OPERATE_TOPIC_MUSER,
   KAFKA_OPERATE_PARTITION_0,
-  KAFKA_OPERATE_PARTITION_1,
+  // KAFKA_OPERATE_PARTITION_1,
   NEW_CARD_LENGTH
 } from '../config/index.js'
 
@@ -28,23 +32,21 @@ let isLooping = false
 const _coverMessage = async msg => {
   try {
     console.log(msg)
-    const { topic, partition, offset, value } = msg
-    const { doorID, cardID, method } = JSON.parse(value)
+    const { topic, offset, value: v } = msg
+    const { hid, id, value, method } = JSON.parse(v)
 
-    let _cardID = cardID
-    let type = 'user'
-    if (partition === 0) {
-      type = 'octopus'
-      if (cardID.length === NEW_CARD_LENGTH) {
+    let _id = id
+    if ([KAFKA_OPERATE_TOPIC_DCARD, KAFKA_OPERATE_TOPIC_MCARD].includes(topic)) {
+      if (id.length === NEW_CARD_LENGTH) {
         // 新卡需要转换成 16 进制
-        const _id = parseInt(cardID).toString(16).toLocaleUpperCase()
-        const len = _id.length
-        _cardID = `0000000000000000${_id}`.substring(len, len + 16)
+        const __id = parseInt(id).toString(16).toLocaleUpperCase()
+        const len = __id.length
+        _id = `0000000000000000${__id}`.substring(len, len + 16)
       }
     }
 
     // save operate to redis
-    await _r.operate({ doorID, cardID: _cardID, method, type, topic, partition, offset })
+    await _r.operate({ hid, id: _id, value, method, topic, offset })
   } catch (e) {
     console.log('[-Kafka Consumer-] _coverMessage ERROR:')
     console.error(e)
@@ -92,16 +94,19 @@ const handleMessage = async message => {
 // on (eventName: 'error' | 'offsetOutOfRange', cb: (error: any) => any): this;
 const initConsumer = async client => {
   // console.log(client)
-  const offset0 = await _r.getOffset(KAFKA_OPERATE_TOPIC, KAFKA_OPERATE_PARTITION_0, 'octopus')
-  // console.log({ offset0 })
-  const offset1 = await _r.getOffset(KAFKA_OPERATE_TOPIC, KAFKA_OPERATE_PARTITION_1, 'user')
-  // console.log({ offset1 })
+  const offsetDcard = await _r.getOffset(KAFKA_OPERATE_TOPIC_DCARD)
+  const offsetDuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_DUSER)
+  const offsetMcard = await _r.getOffset(KAFKA_OPERATE_TOPIC_MCARD)
+  const offsetMuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_MUSER)
+  console.log({ offsetDcard, offsetDuser, offsetMcard, offsetMuser })
 
   const consumer = new Consumer(
     client,
     [
-      { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_0, offset: offset0 },
-      { topic: KAFKA_OPERATE_TOPIC, partition: KAFKA_OPERATE_PARTITION_1, offset: offset1 },
+      { topic: KAFKA_OPERATE_TOPIC_DCARD, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetDcard },
+      { topic: KAFKA_OPERATE_TOPIC_DUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetDuser },
+      { topic: KAFKA_OPERATE_TOPIC_MCARD, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetMcard },
+      { topic: KAFKA_OPERATE_TOPIC_MUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetMuser },
     ],
     {
       autoCommit: false,
