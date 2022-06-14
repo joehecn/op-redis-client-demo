@@ -1,5 +1,5 @@
 
-import crypto from 'crypto'
+// import crypto from 'crypto'
 import { createClient } from 'redis'
 import {
   // 间隔多少条 msg | operateKey 保留一个快照
@@ -136,50 +136,50 @@ class R {
 
     let res = null
     if (method === 'Add') {
-      if (topic) {
-        const topicPartitionKey = _getTopicPartitionKey(topic)
-        console.log({ topicPartitionKey, offset })
-        res = await this._c.multi()
-          .set(topicPartitionKey, offset.toString())
-          // 向 Hash 中添加一条键值对
-          .hSet(cardStateKey, id, value)
-          // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { id, value, method })
-          // 返回存储在的 Hash 中的所有成员
-          .hGetAll(cardStateKey)
-          .exec()
-      } else {
-        res = await this._c.multi()
-          // 向 Hash 中添加一条键值对
-          .hSet(cardStateKey, id, value)
-          // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { id, value, method })
-          // 返回存储在的 Hash 中的所有成员
-          .hGetAll(cardStateKey)
-          .exec()
-      }
+      // if (topic) {
+      const topicPartitionKey = _getTopicPartitionKey(topic)
+      console.log({ topicPartitionKey, offset })
+      res = await this._c.multi()
+        .set(topicPartitionKey, offset.toString())
+        // 向 Hash 中添加一条键值对
+        .hSet(cardStateKey, id, value)
+        // 向 Hash 中添加一条键值对
+        .hSet(cardOperateKey, { id, value, method })
+        // 返回存储在的 Hash 中的所有成员
+        .hGetAll(cardStateKey)
+        .exec()
+      // } else {
+      //   res = await this._c.multi()
+      //     // 向 Hash 中添加一条键值对
+      //     .hSet(cardStateKey, id, value)
+      //     // 向 Hash 中添加一条键值对
+      //     .hSet(cardOperateKey, { id, value, method })
+      //     // 返回存储在的 Hash 中的所有成员
+      //     .hGetAll(cardStateKey)
+      //     .exec()
+      // }
     } else {
-      if (topic) {
-        const topicPartitionKey = _getTopicPartitionKey(topic)
-        res = await this._c.multi()
-          .set(topicPartitionKey, offset.toString())
-          // 从 Hash 中删除 key
-          .hDel(cardStateKey, id)
-          // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { id, method })
-          // 返回存储在的 Hash 中的所有成员
-          .hGetAll(cardStateKey)
-          .exec()
-      } else {
-        res = await this._c.multi()
-          // 从 Hash 中删除 key
-          .hDel(cardStateKey, id)
-          // 向 Hash 中添加一条键值对
-          .hSet(cardOperateKey, { id, method })
-          // 返回存储在的 Hash 中的所有成员
-          .hGetAll(cardStateKey)
-          .exec()
-      }
+      // if (topic) {
+      const topicPartitionKey = _getTopicPartitionKey(topic)
+      res = await this._c.multi()
+        .set(topicPartitionKey, offset.toString())
+        // 从 Hash 中删除 key
+        .hDel(cardStateKey, id)
+        // 向 Hash 中添加一条键值对
+        .hSet(cardOperateKey, { id, method })
+        // 返回存储在的 Hash 中的所有成员
+        .hGetAll(cardStateKey)
+        .exec()
+      // } else {
+      //   res = await this._c.multi()
+      //     // 从 Hash 中删除 key
+      //     .hDel(cardStateKey, id)
+      //     // 向 Hash 中添加一条键值对
+      //     .hSet(cardOperateKey, { id, method })
+      //     // 返回存储在的 Hash 中的所有成员
+      //     .hGetAll(cardStateKey)
+      //     .exec()
+      // }
     }
 
     const cardObj = (topic ? res[3] : res[2]) || {}
@@ -187,11 +187,11 @@ class R {
     const cards = Object.keys(cardObj)
 
     const count = cards.length
-    const MD5 = crypto.createHash('md5')
-    // const md5 = MD5.update(JSON.stringify(cardObj)).digest('hex')
-    const md5 = MD5.update(cards.sort().join()).digest('hex')
+    // const MD5 = crypto.createHash('md5')
+    // const md5 = MD5.update(JSON.stringify(cardObj)).digest('hex') -- old
+    // const md5 = MD5.update(cards.sort().join()).digest('hex')
 
-    const msg = { operateKey, id, value, method, count, md5 }
+    const msg = { operateKey, id, value, method, count } // md5
     const msgStr = JSON.stringify(msg)
     // // 发布消息
     this._c.publish(cardStateKey, msgStr)
@@ -199,7 +199,7 @@ class R {
     // 发布 mqtt 消息
     // 向硬件转发 控制命令 不保留
     mqttEmitter.emit(MQTT_CONTROL_HARDWARE_CMD, {
-      topic: `${hid}/operate/cmd`,
+      topic: `${hid}/${topic}/cmd`,
       payloadStr: msgStr
     })
 

@@ -11,6 +11,7 @@ servers:
 paths:
   /api/v1/operate:
     post:
+      deprecated: true
       operationId: operate
       tags:
         - OperateService
@@ -210,20 +211,6 @@ paths:
                 time:
                   description: report time
                   type: string
-                customID:
-                  description: device ID
-                  type: string
-                id:
-                  description: |
-                    - array: [x, x]
-                    - string: x
-                  oneOf:
-                    - type: array
-                      items:
-                        type: string
-                    - type: string
-                result:
-                  type: boolean
                 type:
                   description: |
                     | type  | 含义  |
@@ -233,7 +220,37 @@ paths:
                     | 3  | 门禁qrcodeid二维码, 联网验证  |
                     | 4  | 门禁蓝牙  |
                     | 5  | 门禁远程开门  |
-                  enum: [1, 2, 3, 4, 5]
+                    | 10  | 信箱上报状态  |
+                  enum: [1, 2, 3, 4, 5, 10]
+                  type: number
+                customID:
+                  description: device ID
+                  type: string
+                id:
+                  description: |
+                    for 1~5
+                    - array: [x, x]
+                    - string: x
+                  oneOf:
+                    - type: array
+                      items:
+                        type: string
+                    - type: string
+                result:
+                  description: for 1~5
+                  type: boolean
+                lock:
+                  description: for 10
+                  type: array
+                  items:
+                    type: number
+                ir:
+                  description: for 10
+                  type: array
+                  items:
+                    type: number
+                groupID:
+                  description: for 10
                   type: number
       responses:
         200:

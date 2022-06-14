@@ -15,13 +15,13 @@ import mqttEmitter from './mqttEmitter.js'
 const waitingQueue = []
 let isLooping = false
 
-const _handleReport = async ctx => {
-  const doorID = ctx.state.doorID
-  mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
-    topic: `${doorID}/report`,
-    payloadStr: ctx.state.payloadStr
-  })
-}
+// const _handleReport = async ctx => {
+//   const doorID = ctx.state.doorID
+//   mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
+//     topic: `${doorID}/report`,
+//     payloadStr: ctx.state.payloadStr
+//   })
+// }
 
 // info
 // { "state": "ONLINE", "version": "TEREO_HW_1.0", "firmware": "TEREO_FW_1.1.1", "profileCustomID": "mega-tereo-door-01" }
@@ -41,9 +41,10 @@ const _handleReport = async ctx => {
 //         "profileCustomID":      "mega-tereo-mail-01"
 // }
 const _handleInfo = async ctx => {
+  console.log(ctx)
+
   const doorID = ctx.state.doorID
   // const { state, version, firmware, type } = ctx.state.payload
-  // console.log({ doorID, state, version, firmware, type })
   // 发布 mqtt 消息
   mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_STA, {
     topic: `${doorID}/info`,
@@ -89,9 +90,10 @@ const _coverMessage = async ctx => {
         // 此消息为 硬件状态
         // console.log('---- mqtt/Htoa: 此消息为 硬件状态 info')
         await _handleInfo(ctx)
-      } else if (topicArr[1] === 'report') {
-        await _handleReport(ctx)
       } /* else { do nothing } */
+      // else if (topicArr[1] === 'report') {
+      //   await _handleReport(ctx)
+      // } /* else { do nothing } */
       break
     /* istanbul ignore next */
     default:

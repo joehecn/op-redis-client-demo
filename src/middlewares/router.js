@@ -11,6 +11,7 @@ import mqttEmitter from '../mqtt/mqttEmitter.js'
 
 import {
   KAFKA_OPERATE_TOPIC_DCARD,
+  MQTT_MOCK_REMOTE_HARDWARE_STA,
   MQTT_MOCK_REMOTE_HARDWARE_OPERATE
 } from '../config/index.js'
 
@@ -25,27 +26,27 @@ const basicAuth = (ctx, next) => {
   return next()
 }
 
-// type
-// 做兼容 1
-// T00000000002 dcard
-router.post('/api/v1/operate', basicAuth, async ctx => {
-  const { type, hid, id, method } = ctx.request.body
+// // type
+// // 做兼容 1
+// // T00000000002 dcard
+// router.post('/api/v1/operate', basicAuth, async ctx => {
+//   const { type, hid, id, method } = ctx.request.body
 
-  if (!(hid && id)) throw Error(1001)
-  if (!['Add', 'Remove'].includes(method)) throw Error(1002)
+//   if (!(hid && id)) throw Error(1001)
+//   if (!['Add', 'Remove'].includes(method)) throw Error(1002)
 
-  const data = await ctx.state.r.operate({
-    hid,
-    id,
-    method,
-    topic: type || KAFKA_OPERATE_TOPIC_DCARD
-  })
+//   const data = await ctx.state.r.operate({
+//     hid,
+//     id,
+//     method,
+//     topic: type || KAFKA_OPERATE_TOPIC_DCARD
+//   })
 
-  ctx.body = {
-    code: 0,
-    data
-  }
-})
+//   ctx.body = {
+//     code: 0,
+//     data
+//   }
+// })
 
 // type
 // 做兼容 1
@@ -161,19 +162,52 @@ router.put('/api/v1/replace_card', basicAuth, async ctx => {
 // customID: T00000000002
 // id: ["13"]
 // type: 5
+// {
+//   time: 1655117659,
+//   customID: 'T00000000004',
+//   groupID: 0,
+//   lock: [
+//     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0
+//   ],
+//   ir: [
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0, 0, 0, 0
+//   ],
+//   type: 10
+// }
 router.post('/api/v1/report', basicAuth, async ctx => {
-  const { customID } = ctx.request.body
+  const { customID, type } = ctx.request.body
 
-  const data = await userReport(ctx.request.body)
+  let data = {}
+  if (type === 10) {
+    console.log(ctx.request.body)
+    // 信箱上报状态
+    const { groupID, lock, ir } = ctx.request.body
 
-  const { reported, report } = data
-
-  if (reported) {
-    // mqtt 上报数据到核心设备管理平台
-    mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
-      topic: `${customID}/report`,
-      payloadStr: JSON.stringify(report)
+    // 发布 mqtt 消息
+    mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_STA, {
+      topic: `${customID}/mailbox/${groupID}/sta`,
+      payloadStr: JSON.stringify({ customID, groupID, lock, ir })
     })
+
+    data = { reported: true }
+  } else {
+    data = await userReport(ctx.request.body)
+    const { reported, report } = data
+    if (reported) {
+      // mqtt 上报数据到核心设备管理平台
+      mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
+        topic: `${customID}/report`,
+        payloadStr: JSON.stringify(report)
+      })
+    }
   }
 
   ctx.body = {

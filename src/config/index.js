@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === 'development') {
   _url = 'redis://redis:6379'
   // mqttServer
   _mosquitto = 'mqtt:1883'
-  _mosquitto_core = '47.242.32.120:1883' // sandbox
+  _mosquitto_core = '47.242.32.120:1883' // 47.242.32.120 sandbox
 
   _kafkaHost = '47.242.32.120:9092'
 
