@@ -183,18 +183,20 @@ router.put('/api/v1/replace_card', basicAuth, async ctx => {
 //   type: 10
 // }
 router.post('/api/v1/report', basicAuth, async ctx => {
-  const { customID, type } = ctx.request.body
+  console.log('---- api/v1/report:')
+  console.log(ctx.request.body)
+
+  const { customID, type, time } = ctx.request.body
 
   let data = {}
   if (type === 10) {
-    console.log(ctx.request.body)
     // 信箱上报状态
     const { groupID, lock, ir } = ctx.request.body
 
     // 发布 mqtt 消息
     mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_STA, {
       topic: `${customID}/mailbox/${groupID}/sta`,
-      payloadStr: JSON.stringify({ customID, groupID, lock, ir })
+      payloadStr: JSON.stringify({ customID, groupID, lock, ir, time: time * 1000 })
     })
 
     data = { reported: true }

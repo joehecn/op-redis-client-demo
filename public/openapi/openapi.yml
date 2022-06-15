@@ -210,7 +210,7 @@ paths:
               properties:
                 time:
                   description: report time
-                  type: string
+                  type: number
                 type:
                   description: |
                     | type  | 含义  |
