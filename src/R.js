@@ -44,7 +44,7 @@ class R {
   async init () {
     const client = createClient({
       url: this._url, // 'redis://10.12.1.11:6379'
-      database: 1
+      database: 3
     })
   
     client.on('error', err => {
