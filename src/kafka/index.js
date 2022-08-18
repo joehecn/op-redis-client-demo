@@ -10,6 +10,10 @@ import {
   KAFKA_OPERATE_TOPIC_DUSER,
   KAFKA_OPERATE_TOPIC_MCARD,
   KAFKA_OPERATE_TOPIC_MUSER,
+  KAFKA_OPERATE_TOPIC_LCARD,
+  KAFKA_OPERATE_TOPIC_LUSER,
+  KAFKA_OPERATE_TOPIC_LCCARD,
+  KAFKA_OPERATE_TOPIC_LCUSER,
   KAFKA_OPERATE_PARTITION_0,
   // KAFKA_OPERATE_PARTITION_1,
   NEW_CARD_LENGTH
@@ -96,9 +100,26 @@ const initConsumer = async client => {
   // console.log(client)
   const offsetDcard = await _r.getOffset(KAFKA_OPERATE_TOPIC_DCARD)
   const offsetDuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_DUSER)
+
   const offsetMcard = await _r.getOffset(KAFKA_OPERATE_TOPIC_MCARD)
   const offsetMuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_MUSER)
-  console.log({ offsetDcard, offsetDuser, offsetMcard, offsetMuser })
+
+  const offsetLcard = await _r.getOffset(KAFKA_OPERATE_TOPIC_LCARD)
+  const offsetLuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_LUSER)
+
+  const offsetLccard = await _r.getOffset(KAFKA_OPERATE_TOPIC_LCCARD)
+  const offsetLcuser = await _r.getOffset(KAFKA_OPERATE_TOPIC_LCUSER)
+
+  console.log({
+    offsetDcard,
+    offsetDuser,
+    offsetMcard,
+    offsetMuser,
+    offsetLcard,
+    offsetLuser,
+    offsetLccard,
+    offsetLcuser
+  })
 
   const consumer = new Consumer(
     client,
@@ -107,6 +128,10 @@ const initConsumer = async client => {
       { topic: KAFKA_OPERATE_TOPIC_DUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetDuser },
       { topic: KAFKA_OPERATE_TOPIC_MCARD, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetMcard },
       { topic: KAFKA_OPERATE_TOPIC_MUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetMuser },
+      { topic: KAFKA_OPERATE_TOPIC_LCARD, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetLcard },
+      { topic: KAFKA_OPERATE_TOPIC_LUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetLuser },
+      { topic: KAFKA_OPERATE_TOPIC_LCCARD, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetLccard },
+      { topic: KAFKA_OPERATE_TOPIC_LCUSER, partition: KAFKA_OPERATE_PARTITION_0, offset: offsetLcuser },
     ],
     {
       autoCommit: false,

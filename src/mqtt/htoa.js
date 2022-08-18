@@ -2,7 +2,7 @@
 import {
   MQTT_CONTROL_HARDWARE_ERROR,
   MQTT_MOCK_REMOTE_HARDWARE_STA,
-  MQTT_MOCK_REMOTE_HARDWARE_OPERATE
+  // MQTT_MOCK_REMOTE_HARDWARE_OPERATE
 } from '../config/index.js'
 
 import mqttHandingErrors from './mqttHandingErrors.js'
@@ -16,9 +16,9 @@ const waitingQueue = []
 let isLooping = false
 
 // const _handleReport = async ctx => {
-//   const doorID = ctx.state.doorID
+//   const customID = ctx.state.customID
 //   mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
-//     topic: `${doorID}/report`,
+//     topic: `${customID}/report`,
 //     payloadStr: ctx.state.payloadStr
 //   })
 // }
@@ -42,19 +42,20 @@ let isLooping = false
 // }
 const _handleInfo = async ctx => {
   console.log(ctx)
-
-  const doorID = ctx.state.doorID
+  // Tereo custom_id
+  const customID = ctx.state.customID
   // const { state, version, firmware, type } = ctx.state.payload
   // 发布 mqtt 消息
   mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_STA, {
-    topic: `${doorID}/info`,
+    topic: `${customID}/info`,
     payloadStr: ctx.state.payloadStr
   })
 }
 
 const _getCtx = (topic, payloadBuf) => {
   const topicArr = topic.split('/')
-  const doorID = topicArr[0]
+  // Tereo custom_id
+  const customID = topicArr[0]
 
   const inTime = Date.now() // 时间戳
 
@@ -63,7 +64,7 @@ const _getCtx = (topic, payloadBuf) => {
     state: {
       topic,
       topicArr,
-      doorID,
+      customID,
       payloadBuf,
       inTime
     },

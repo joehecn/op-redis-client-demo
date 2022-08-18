@@ -1,8 +1,11 @@
-docker pull joehe/op-redis-client-demo:1.0.1
+docker build -t joehe/op-redis-client-demo:1.0.4 .
+docker push joehe/op-redis-client-demo:1.0.4
+docker pull joehe/op-redis-client-demo:1.0.4
 
-docker run -d -p 4322:4322 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network chirpstack-docker_default --name op-redis-client-demo1 joehe/op-redis-client-demo:1.0.1
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network chirpstack-docker_default --name op-redis-client-demo3 joehe/op-redis-client-demo:1.0.4
 
-docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo1 joehe/op-redis-client-demo:1.0.1
+# 10.12.1.11 and hongkong
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo3 joehe/op-redis-client-demo:1.0.4
 
 TODO:
 
@@ -51,13 +54,15 @@ T00000000002
 ```
 ```bash
 # 本地
-docker build -t joehe/op-redis-client-demo:1.0.1 .
+docker build -t joehe/op-redis-client-demo:1.0.4 .
 
 docker run -d -p 4322:4322 -v /"$PWD"/src:/server/src -v /"$PWD"/logs:/server/logs -v /"$PWD"/public:/server/public --log-opt max-size=500m --log-opt max-file=1  --network chirpstack-docker_default --name op-redis-client-demo joe/op-redis-client-demo:1.0.0
 
 # linux 工程机
 ssh admin1@10.12.1.11
 Admin123.
+
+19128330087
 
 sudo -s
 
@@ -67,7 +72,7 @@ docker network connect op-net mqtt --alias mosquitto
 
 docker build -t joehe/op-redis-client-demo:1.0.1 .
 
-docker run -d -p 4322:4323 -v /"$PWD"/src:/server/src -v /"$PWD"/logs:/server/logs -v /"$PWD"/public:/server/public --log-opt max-size=500m --log-opt max-file=1  --network op-net --name op-redis-client-demo joe/op-redis-client-demo:1.0.0
+docker run -d -p 4322:4323 -v /"$PWD"/src:/server/src -v /"$PWD"/logs:/server/logs -v /"$PWD"/public:/server/public --log-opt max-size=500m --log-opt max-file=1  --network op-net --name op-redis-client-demo joehe/op-redis-client-demo:1.0.4
 
 scp /Users/hemiao/joe/op/op-redis-client-demo/Dockerfile admin1@10.12.1.11:/home/admin1/op-redis-client-demo
 scp /Users/hemiao/joe/op/op-redis-client-demo/package.json admin1@10.12.1.11:/home/admin1/op-redis-client-demo

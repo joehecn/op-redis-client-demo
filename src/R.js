@@ -92,6 +92,9 @@ class R {
    * @param {string} method 'Add', 'Del'
    */
   async operate({ hid, id, value, method, topic, offset }) {
+    console.log('---- operate ----')
+    console.log({ hid, id, value, method, topic, offset })
+
     const {
       // Number
       cardIncrKey,
@@ -106,6 +109,7 @@ class R {
       // Set
       cardSnapshotPreKey
     } = _getDoorOptions(topic, hid)
+    console.log({ cardIncrKey, cardStateKey, cardOperatePreKey, cardSnapshotPreKey })
 
     // INCR 最大值确定取值范围[1, MAX_INCR_NUM)
     let operateKey = await this._c.incr(cardIncrKey)
@@ -125,6 +129,7 @@ class R {
         await this._c.del(key)
       })
     }
+    console.log({ operateKey })
 
     // WATCH命令可以监控一个或多个键，
     // 一旦其中有一个键被修改（或删除），之后的事务就不会执行。

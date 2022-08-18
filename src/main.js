@@ -12,6 +12,9 @@ import {
   READIS_URL
 } from './config/index.js'
 
+import { WebSocketServer } from 'ws'
+import mockEmitter from './util/mockEmitter.js'
+
 const start = async () => {
   // mqtt
   const initMqttIsok = await initMqttServer()
@@ -27,7 +30,14 @@ const start = async () => {
 
   // app server
   const app = await initApp(r)
-  app.listen(SEV_PORT, console.log(`------ server is run on http://localhost:${SEV_PORT}`))
+  const server = app.listen(SEV_PORT, console.log(`------ server is run on http://localhost:${SEV_PORT}`))
+
+  const wsSev = new WebSocketServer({ server })
+  mockEmitter.on('mock-data', data => {
+    wsSev.clients.forEach(client => {
+      client.send(JSON.stringify(data))
+    })
+  })
 
   return true
 }

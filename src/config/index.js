@@ -79,6 +79,10 @@ export const KAFKA_OPERATE_TOPIC_DCARD = 'dcard' // door dcard
 export const KAFKA_OPERATE_TOPIC_DUSER = 'duser' // door duser
 export const KAFKA_OPERATE_TOPIC_MCARD = 'mcard' // mailbox mcard
 export const KAFKA_OPERATE_TOPIC_MUSER = 'muser' // mailbox muser
+export const KAFKA_OPERATE_TOPIC_LCARD = 'lcard' // lift lcard
+export const KAFKA_OPERATE_TOPIC_LUSER = 'luser' // lift luser
+export const KAFKA_OPERATE_TOPIC_LCCARD = 'lccard' // lift call lccard
+export const KAFKA_OPERATE_TOPIC_LCUSER = 'lcuser' // lift call lcuser
 export const KAFKA_OPERATE_PARTITION_0 = 0 // 只开放一个 partition
 
 // octopus card

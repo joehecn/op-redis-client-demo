@@ -15,6 +15,10 @@ import {
   MQTT_MOCK_REMOTE_HARDWARE_OPERATE
 } from '../config/index.js'
 
+import superagent from 'superagent'
+
+import mockEmitter from '../util/mockEmitter.js'
+
 export const router = new Router()
 
 const basicAuth = (ctx, next) => {
@@ -203,6 +207,7 @@ router.post('/api/v1/report', basicAuth, async ctx => {
   } else {
     data = await userReport(ctx.request.body)
     const { reported, report } = data
+    console.log({ reported, report })
     if (reported) {
       // mqtt 上报数据到核心设备管理平台
       mqttEmitter.emit(MQTT_MOCK_REMOTE_HARDWARE_OPERATE, {
@@ -231,4 +236,78 @@ router.post('/api/v1/qrcode_can_open_door', basicAuth, async ctx => {
     code: 0,
     data
   }
+})
+
+router.get('/ota/:category/:filename', async ctx => {
+  // http://localhost:4323/ota/zion/ZION_FW_2.0.33.bin
+  // http://fusquare-server.cloud-building.fun:3000/ota/zion/ZION_FW_2.0.33.bin
+  // http://localhost:4323/ota/tereo/TEREO_FW_1.0.0.bin
+  // http://10.12.1.11:4322/ota/tereo/TEREO_FW_1.0.0.bin
+  // http://fusquare-server.cloud-building.fun:3000/ota/tereo/TEREO_FW_1.0.0.bin
+  const { category, filename } = ctx.params
+  const url = `http://fusquare-server.cloud-building.fun:3000/ota/${category}/${filename}`
+
+  ctx.body = superagent.get(url)
+})
+
+// mock lift
+router.get('/api/v1/lift/get_info', async ctx => {
+  const { customID } = ctx.query
+  
+  const body = {
+    code: 0,
+    data: {
+      canContrl: true,
+      direction: [
+        'Up'
+      ],
+      infos: [
+        {
+          customID,
+          canContrl: true,
+          floor: -1,
+          direction: 'Up'
+        }
+      ]
+    }
+  }
+
+  mockEmitter.emit('mock-data', {
+    api: 'get_info',
+    method: 'get',
+    query: { customID },
+    body
+  })
+
+  ctx.body = body
+})
+
+router.put('/api/v1/lift/contrl_outside', async ctx => {
+  const { customID, floor, direction } = ctx.request.body
+
+  const body = { code: 0 }
+  
+  mockEmitter.emit('mock-data', {
+    api: 'contrl_outside',
+    method: 'put',
+    query: { customID, floor, direction },
+    body
+  })
+
+  ctx.body = body
+})
+
+router.put('/api/v1/lift/contrl_inside', async ctx => {
+  const { customID, floor } = ctx.request.body
+
+  const body = { code: 0 }
+  
+  mockEmitter.emit('mock-data', {
+    api: 'contrl_inside',
+    method: 'put',
+    query: { customID, floor },
+    body
+  })
+
+  ctx.body = body
 })

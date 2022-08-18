@@ -4,10 +4,10 @@ info:
   description: Masik Local Server RESTFULL API
   version: 1.0.0
 servers:
-- url: http://10.12.1.11:4322/
-  description: for dev online.
-- url: http://localhost:4323/
-  description: for development.
+  - url: http://10.12.1.11:4322/
+    description: for dev online.
+  - url: http://localhost:4323/
+    description: for development.
 paths:
   /api/v1/operate:
     post:
@@ -286,8 +286,159 @@ paths:
             application/json:
               schema:
                 properties: {}
+  /ota/${category}/{filename}:
+    get:
+      operationId: getOta
+      tags:
+        - OtaService
+      summary: Ota.
+      description: Ota.
+      parameters:
+        - name: category
+          in: path
+          description: category.
+          required: true
+          schema:
+            type: string
+        - name: filename
+          in: path
+          description: file name.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: A successful response.
+  /api/v1/lift/get_info:
+    get:
+      operationId: liftGetInfo
+      tags:
+        - LiftService
+      summary: Get lift info.
+      description: 获取电梯信息.
+      security:
+        - basicAuth: []
+      parameters:
+        - description: 呼梯客户编码.
+          name: customID
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Lift info response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      canContrl:
+                        description: 是否可控.
+                        type: boolean
+                      direction:
+                        description: 呼梯是否按下的状态
+                        type: array
+                        items:
+                          type: string
+                          enum: ["Up", "Dowm"]
+                      infos:
+                        description: 电梯状态.
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            customID:
+                              description: 按梯梯箱客户编码(MA001)
+                              type: string
+                            canContrl:
+                              description: 是否可控.
+                              type: boolean
+                            floor:
+                              description: 楼层标识(G)
+                              enum: ['-1', '0', 'G', '2', '3']
+                              type: string
+                            direction:
+                              description: 方向
+                              enum: ["Up", "Dowm"]
+                              type: string
+  /api/v1/lift/contrl_outside:
+    put:
+      operationId: liftContrlOutside
+      tags:
+        - LiftService
+      summary: Contrl the lift from outside.
+      description: 呼梯呼叫某一个电梯组的接口.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customID:
+                  description: 呼梯客户编码(CAL001)
+                  type: string
+                floor:
+                  description: 楼层标识(G)
+                  enum: ['-1', '0', 'G', '2', '3']
+                  type: string
+                direction:
+                  description: 方向
+                  enum: ["Up", "Dowm"]
+                  type: string
+      responses:
+        200:
+          description: Contrl outside response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+  /api/v1/lift/contrl_inside:
+    put:
+      operationId: liftContrlInside
+      tags:
+        - LiftService
+      summary: Contrl the lift from inside.
+      description: Contrl the lift from inside.
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customID:
+                  description: 按梯梯箱客户编码(MA001)
+                  type: string
+                floor:
+                  description: 楼层标识(G)
+                  enum: ['-1', '0', 'G', '2', '3']
+                  type: string
+      responses:
+        200:
+          description: Contrl outside response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
 components:
   securitySchemes:
-    basicAuth:     # <-- arbitrary name for the security scheme
+    basicAuth: # <-- arbitrary name for the security scheme
       type: http
       scheme: basic
