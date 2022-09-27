@@ -41,6 +41,7 @@ let isLooping = false
 //         "profileCustomID":      "mega-tereo-mail-01"
 // }
 const _handleInfo = async ctx => {
+  console.log('---- _handleInfo')
   console.log(ctx)
   // Tereo custom_id
   const customID = ctx.state.customID

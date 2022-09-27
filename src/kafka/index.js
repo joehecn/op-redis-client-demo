@@ -146,6 +146,7 @@ const initConsumer = async client => {
     consumer.close()
 
     console.error('[-Kafka Consumer-] error')
+    console.error(e)
     console.error(e.code, e.message)
     // writeKafkaErr({
     //   ctx: {

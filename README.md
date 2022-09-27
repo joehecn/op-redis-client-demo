@@ -1,11 +1,14 @@
-docker build -t joehe/op-redis-client-demo:1.0.4 .
-docker push joehe/op-redis-client-demo:1.0.4
-docker pull joehe/op-redis-client-demo:1.0.4
+docker build -t joehe/op-redis-client-demo:1.0.6 .
+docker push joehe/op-redis-client-demo:1.0.6
+docker pull joehe/op-redis-client-demo:1.0.6
 
-docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network chirpstack-docker_default --name op-redis-client-demo3 joehe/op-redis-client-demo:1.0.4
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network chirpstack-docker_default --name op-redis-client-demo6 -e CLIENT=masik-localhost joehe/op-redis-client-demo:1.0.6
 
-# 10.12.1.11 and hongkong
-docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo3 joehe/op-redis-client-demo:1.0.4
+# 10.12.1.11
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo6 -e CLIENT=masik-sz-sandbox joehe/op-redis-client-demo:1.0.6
+
+# hongkong
+docker run -d -p 4322:4323 -v /"$PWD"/logs:/server/logs --log-opt max-size=500m --log-opt max-file=1 --network op-net --name op-redis-client-demo6 -e CLIENT=masik-hk-sandbox joehe/op-redis-client-demo:1.0.6
 
 TODO:
 
@@ -94,6 +97,8 @@ docker run -d -p 1883:1883 -p 9001:9001 --name mqtt -v /home/admin1/mqtt/config/
 npx mqtt sub -v -t '#' -h '10.12.1.11' -p '1883'
 npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h '10.12.1.11' -p '1883'
 npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h 'localhost' -p '1883'
+
+npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h '47.242.32.120' -p '1883'
 
 10.12.1.11:4322/api
 npx mqtt sub -v -u 'fusquare-server' -P 'Dad6E_a13_3c' -t '#' -h '10.12.1.11' -p '1883'

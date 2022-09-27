@@ -16,12 +16,12 @@ let _hardWareClient = null
 
 // { "state": "ONLINE", "version": "TEREO_HW_1.0", "firmware": "TEREO_FW_1.1.1", "type": "door" }
 // {"state":"OFFLINE"}
-export const getHardwareClient = async () => {
+export const getHardwareClient = async (option = {}) => {
   /* istanbul ignore else */
   if (_hardWareClient === null) {
     _hardWareClient = await createMqttClient([
       '+/info'
-    ], MQTT_HARDWARE, htoa)
+    ], MQTT_HARDWARE, htoa, option)
   } /* else { do nothing } */
 
   return _hardWareClient

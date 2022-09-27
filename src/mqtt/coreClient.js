@@ -33,12 +33,12 @@ let _coreClient = null
 
 // { "state": "ONLINE", "version": "TEREO_HW_1.0", "firmware": "TEREO_FW_1.1.1", "type": "door" }
 // {"state":"OFFLINE"}
-export const getCoreClient = async () => {
+export const getCoreClient = async (option = {}) => {
   /* istanbul ignore else */
   if (_coreClient === null) {
     _coreClient = await createMqttClient([
-      '+/cmd'
-    ], MQTT_CORE, htoc)
+      '+/+/cmd' // 远程控门 和 ota
+    ], MQTT_CORE, htoc, option)
   } /* else { do nothing } */
 
   return _coreClient

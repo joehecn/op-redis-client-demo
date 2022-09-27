@@ -1,3 +1,9 @@
+import packageJson from '../../package.json' assert { type: 'json' }
+
+export const MQTT_CLIENT_ID = process.env.CLIENT || 'masik-localhost'
+console.log('MQTT_CLIENT_ID:', MQTT_CLIENT_ID)
+export const VERSION = packageJson.version
+console.log('VERSION:', VERSION)
 
 // redis
 let _url = 'redis://localhost:6379'
@@ -9,6 +15,7 @@ let _kafkaHost = 'localhost:9092'
 
 let _masikHost = 'localhost:4322'
 let _masikOrg = '34'
+let _masikOrgApp = '16'
 let _masikSuperTenYearsApiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk1IiwiaWRUeXBlIjoidXNlciIsImlhdCI6MTY0OTcxNDY0MzMyOCwiZXhwaXJlIjoxOTY1MDc0NjQzMzI4fQ.dvlUQ0J5OuIkMZP8QcBGuYJ785pu4pcYyaFvYnpwA6g'
 
 if (process.env.NODE_ENV === 'development') {
@@ -25,12 +32,14 @@ if (process.env.NODE_ENV === 'development') {
 
   _masikHost = '47.242.32.120:4322'
   _masikOrg = '35'
+  _masikOrgApp = '15'
   _masikSuperTenYearsApiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJpZFR5cGUiOiJ1c2VyIiwiaWF0IjoxNjQ5OTE2Njk4Mjc5LCJleHBpcmUiOjE5NjUyNzY2OTgyNzl9.4wjsBDko7Rb26cI4ZK98-6uVlZBJFSo42QNZMris8fg'
 }
 
 // masik api server
 export const MASIK_HOST = _masikHost
 export const MASIK_ORG = _masikOrg
+export const MASIK_ORG_APP = _masikOrgApp
 export const MASIK_SUPER_TEN_YEARS_API_KEY = _masikSuperTenYearsApiKey
 
 export const READIS_URL = _url

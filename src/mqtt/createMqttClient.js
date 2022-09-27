@@ -11,12 +11,16 @@ import { connect } from 'mqtt'
   * @param {*} topicArr
   * ['+/info', ...]
   */
-const createMqttClient = (topicArr, url, method) => {
+const createMqttClient = (topicArr, url, method, option) => {
+  const _option = Object.assign({
+    username: 'fusquare-server',
+    password: 'Dad6E_a13_3c'
+  }, option)
+
+  console.log(_option)
+
   return new Promise(resolve => {
-    const client = connect(url, {
-      username: 'fusquare-server',
-      password: 'Dad6E_a13_3c'
-    })
+    const client = connect(url, _option)
 
     client.on('message', method)
 
